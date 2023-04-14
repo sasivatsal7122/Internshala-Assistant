@@ -21,7 +21,8 @@ def send_telegram_message(newly_posted_internships: list[dict]) -> None:
     Args:
         newly_posted_internships: A list of dictionaries containing details of newly posted internships.
     """
-    print('Sending Telegram message...')
+    if len(newly_posted_internships)>0:
+        print('Sending Telegram message...')
     bot_token = '5986205629:AAHQGRcXH6xcYEdYD2hyH0RCLlPPu6Sen88'
     chat_id = '919334359'
     for internship_details in newly_posted_internships:
@@ -37,7 +38,6 @@ def send_telegram_message(newly_posted_internships: list[dict]) -> None:
         else:
             print(f'Something went wrong: {response.text}')
         time.sleep(5)
-    print('Telegram message sent!')
     
     
 def create_db() -> None:
@@ -105,6 +105,9 @@ def initialize_driver() -> webdriver.Chrome:
     options.add_argument("--disable-setuid-sandbox")
     options.add_argument("--disable-logging")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument(
+    "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36")
+
     options.add_argument("--headless")
 
     driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager().install()))
@@ -135,6 +138,8 @@ def get_internships(driver: webdriver.Chrome) -> list[dict]:
     tab_text = current_window.title
     print(f"Found {tab_text}")
     
+    WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.ID, 'internship_list_container_1')))
+    
     internship_list_container = driver.find_element(By.ID, 'internship_list_container_1')
     internship_meta_divs = internship_list_container.find_elements(By.CLASS_NAME, 'internship_meta')
 
@@ -144,15 +149,19 @@ def get_internships(driver: webdriver.Chrome) -> list[dict]:
         try:
 
             # GETTING COMPANY NAME AND ROLE
+            WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.CLASS_NAME, 'individual_internship_header')))
             company_div = internship_meta.find_element(By.CLASS_NAME, 'individual_internship_header').find_element(By.CLASS_NAME, 'company')
-
+        
             intern_role = company_div.find_element(By.TAG_NAME, 'h3').text
             company_name = company_div.find_element(By.TAG_NAME, 'h4').text
             apply_link = company_div.find_element(By.TAG_NAME, 'a').get_attribute('href')
+            print(f"Found {company_name} - {intern_role} - {apply_link}")
 
             # GETTING START DATE, DURATION AND STIPEND
+            WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.CLASS_NAME, 'internship_other_details_container')))
             intern_details_div = internship_meta.find_element(By.CLASS_NAME, 'internship_other_details_container').text
             intern_details = intern_details_div.split(' \n')[0].split('\n')
+            print(intern_details)
 
             start_date = intern_details[1]
             duration = intern_details[3]
