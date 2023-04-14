@@ -105,6 +105,7 @@ def initialize_driver() -> webdriver.Firefox:
     options.add_argument("--disable-setuid-sandbox")
     options.add_argument("--disable-logging")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--headless")
 
     driver = webdriver.Firefox(options=options, service=Service(GeckoDriverManager().install()))
     print('Driver initialized!')
