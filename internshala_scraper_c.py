@@ -125,7 +125,7 @@ def get_internships(driver: webdriver.Chrome) -> list[dict]:
         A list of dictionaries containing details of the internships.
     """
     print('Getting internships...')
-    url = "https://internshala.com/internships/work-from-home-python-django-internships/stipend-2000/"
+    url = "https://internshala.com/internships/work-from-home-python-django-internships/"
     driver.get(url)
     try:
         no_thanks_link = WebDriverWait(driver, 30).until(
