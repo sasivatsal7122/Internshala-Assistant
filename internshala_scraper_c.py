@@ -1,12 +1,9 @@
 from selenium.webdriver.chrome.options import Options
-from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from seleniumwire import webdriver
+from selenium import webdriver
 import sqlite3
 from pytz import timezone 
 from datetime import datetime
@@ -110,7 +107,8 @@ def initialize_driver() -> webdriver.Chrome:
 
     options.add_argument("--headless")
 
-    driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager().install()))
+    driver = webdriver.Chrome(options=options,service=Service("/usr/bin/chromedriver"))
+    #driver = webdriver.Chrome(options=options)
     print('Driver initialized!')
     return driver
 
@@ -134,18 +132,16 @@ def get_internships(driver: webdriver.Chrome) -> list[dict]:
         no_thanks_link.click()
     except:
         pass
-    current_window = driver.current_window_handle
-    tab_text = current_window.title
-    print(f"Found {tab_text}")
     
     WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.ID, 'internship_list_container_1')))
     
     internship_list_container = driver.find_element(By.ID, 'internship_list_container_1')
     internship_meta_divs = internship_list_container.find_elements(By.CLASS_NAME, 'internship_meta')
+    internship_link_divs = internship_list_container.find_elements(By.CLASS_NAME, 'individual_internship')
 
     new_internships = []
     print(f"Found {len(internship_meta_divs)} internships")
-    for internship_meta in internship_meta_divs:
+    for internship_meta,internship_link_div in zip(internship_meta_divs,internship_link_divs):
         try:
 
             # GETTING COMPANY NAME AND ROLE
@@ -153,8 +149,8 @@ def get_internships(driver: webdriver.Chrome) -> list[dict]:
             company_div = internship_meta.find_element(By.CLASS_NAME, 'individual_internship_header').find_element(By.CLASS_NAME, 'company')
         
             intern_role = company_div.find_element(By.TAG_NAME, 'h3').text
-            company_name = company_div.find_element(By.TAG_NAME, 'h4').text
-            apply_link = company_div.find_element(By.TAG_NAME, 'a').get_attribute('href')
+            company_name = company_div.find_element(By.TAG_NAME, 'p').text
+            apply_link = internship_link_div.find_element(By.CLASS_NAME, 'btn.btn-secondary.view_detail_button_outline').get_attribute('href')
             print(f"Found {company_name} - {intern_role} - {apply_link}")
 
             # GETTING START DATE, DURATION AND STIPEND
@@ -192,10 +188,10 @@ if __name__=="__main__":
     driver = initialize_driver()
     create_db()
     while True:
-        print('Getting internships...')
         python_internships = get_internships(driver)
         newly_posted_internships = insert_into_db(python_internships)
         send_telegram_message(newly_posted_internships)
         print('Sleeping for 30 minutes...')
         time.sleep(60*30)
         
+
